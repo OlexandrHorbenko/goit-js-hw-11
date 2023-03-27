@@ -1,5 +1,5 @@
 // index.js
-import Notiflix from '../node_modules/notiflix/dist/notiflix-3.2.6.min.js';
+import Notiflix from 'notiflix';
 import { showErrorMessage, showEndMessage } from './js/notiflixHelper.js';
 import { handleRenderImages, handleClearGallery } from './js/galleryImages.js';
 import { showbtnLoadMore, hidebtnLoadMore } from './js/btnLoadMore.js';
@@ -34,18 +34,27 @@ btnLoadMore.addEventListener('click', () => {
 
 async function fetchImages() {
   try {
-    const images = await fetchImagesFromApi(searchQuery, currentPage);
-    if (images.length === 0) {
+    const { hits, totalHits } = await fetchImagesFromApi(searchQuery, currentPage);
+
+    if (hits.length === 0 && currentPage === 1) {
       Notiflix.Notify.failure(
         'Sorry, there are no images matching your search query. Please try again.'
       );
       return;
     }
 
-    handleRenderImages(images, gallery);
+    handleRenderImages(hits, gallery);
     showbtnLoadMore();
+
+    const displayedImages = currentPage * 40;
+
+    if (hits.length === 0 || displayedImages >= totalHits) {
+      Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
+      hidebtnLoadMore();
+      return;
+    }
   } catch (error) {
     Notiflix.Notify.failure('An error occurred. Please try again.');
-    console.error(error);
+    console.error('Error in fetchImages:', error);
   }
 }
